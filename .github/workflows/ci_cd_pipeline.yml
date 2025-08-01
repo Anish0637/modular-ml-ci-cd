@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11"] # Test with multiple Python versions
 
     steps:
       - name: Checkout repository
@@ -23,7 +23,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
+          cache: 'pip' # Cache pip dependencies for faster builds
 
       - name: Install dependencies
         run: |
@@ -32,8 +32,8 @@ jobs:
 
       - name: Run Linting with Flake8
         run: |
-          pip install flake8
           flake8 src/ tests/ main.py --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           flake8 src/ tests/ main.py --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
       - name: Run Pytest Unit Tests
@@ -41,9 +41,9 @@ jobs:
           pytest tests/
 
   train_and_evaluate:
-    needs: build_and_test
+    needs: build_and_test # This job runs only after build_and_test is successful
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -51,7 +51,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.10' # Use a specific Python version for training
 
       - name: Install dependencies
         run: |
@@ -62,11 +62,40 @@ jobs:
         run: |
           python main.py
         env:
+          # Example of passing environment variables, if your main.py needed them
           # ML_MODEL_OUTPUT_DIR: 'models'
 
       - name: Upload Trained Model (Artifact)
         uses: actions/upload-artifact@v4
         with:
-          name: trained-model-${{ github.sha }}
-          path: models/iris_classifier.pkl
-          retention-days: 5
+          name: trained-model-${{ github.sha }} # Unique name for each run
+          path: models/iris_classifier.pkl # Path to your saved model
+          retention-days: 5 # Keep artifact for 5 days
+
+      - name: Display Evaluation Metrics (Optional: for reporting)
+        run: |
+          # You might parse metrics from main.py output or a saved file here
+          # For simplicity, we assume main.py prints them
+          echo "Model training and evaluation completed. Check logs above for metrics."
+
+  # Placeholder for Continuous Deployment (CD)
+  # deploy:
+  #   needs: train_and_evaluate # This job runs only after training and evaluation are successful
+  #   runs-on: ubuntu-latest
+  #   environment:
+  #     name: production # Define a production environment for deployment
+  #     url: https://your-model-api.com # URL to your deployed model/service
+  #   steps:
+  #     - name: Download Trained Model
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: trained-model-${{ github.sha }}
+  #         path: downloaded_models/
+  #     - name: Deploy Model to Production
+  #       run: |
+  #         echo "Deploying model from downloaded_models/ to production environment..."
+  #         # Add your deployment commands here (e.g., to an API endpoint, cloud service)
+  #         # This could involve Docker builds, pushing to a registry, or cloud provider CLI commands
+  #         # Example: aws sagemaker deploy-model ...
+  #         # Example: docker build -t my-ml-api . && docker push my-ml-api
+  #         echo "Model deployment complete."
