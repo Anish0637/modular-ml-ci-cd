@@ -6,7 +6,7 @@ from src.model_evaluation import evaluate_model, print_metrics
 import pandas as pd
 
 def main():
-    print("--- Starting ML Pipeline ---")
+    print("--- Starting ML Pipeline ----")
     df = load_data()
     X, y = preprocess_data(df)
     X_train, X_test, y_train, y_test = split_data(X, y)
@@ -23,4 +23,4 @@ def main():
     print("--- Pipeline Finished ---")
 
 if __name__ == "__main__":
-    main()
+    main
