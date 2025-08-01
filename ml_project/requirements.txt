@@ -1,0 +1,6 @@
+
+pandas
+scikit-learn
+pytest
+flake8
+joblib

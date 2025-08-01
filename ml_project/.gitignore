@@ -1,0 +1,19 @@
+
+# Virtual environment
+venv/
+.venv/
+
+# Byte-compiled files
+__pycache__/
+*.pyc
+
+# IDE files
+.vscode/
+
+# Local data files
+data/processed/
+models/
+
+# Logs and generated data
+*.log
+    
