@@ -2,7 +2,7 @@
 # main.py
 from src.data_preprocessing import load_data, preprocess_data, split_data
 from src.model_training import train_model, save_model
-from src.model_evaluation import evaluate_model, print_metrics
+from src.model_evaluation import evaluate_model
 import pandas as pd
 
 def main():
