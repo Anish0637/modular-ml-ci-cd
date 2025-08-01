@@ -1,76 +1,3 @@
-
-  # name: Python ML CI/CD Pipeline
-
-  # on:
-  #   push:
-  #     branches:
-  #       - main
-  #   pull_request:
-  #     branches:
-  #       - main
-
-  # jobs:
-  #   build_and_test:
-  #     runs-on: ubuntu-latest
-  #     strategy:
-  #       matrix:
-  #         python-version: ["3.9", "3.10", "3.11"]
-
-  #     steps:
-  #       - name: Checkout repository
-  #         uses: actions/checkout@v4
-
-  #       - name: Set up Python ${{ matrix.python-version }}
-  #         uses: actions/setup-python@v5
-  #         with:
-  #           python-version: ${{ matrix.python-version }}
-  #           cache: 'pip'
-
-  #       - name: Install dependencies
-  #         run: |
-  #           python -m pip install --upgrade pip
-  #           pip install -r requirements.txt
-
-  #       - name: Run Linting with Flake8
-  #         run: |
-  #           pip install flake8
-  #           flake8 src/ tests/ main.py --count --select=E9,F63,F7,F82 --show-source --statistics
-  #           flake8 src/ tests/ main.py --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
-  #       - name: Run Pytest Unit Tests
-  #         run: |
-  #           pytest tests/
-
-  #   train_and_evaluate:
-  #     needs: build_and_test
-  #     runs-on: ubuntu-latest
-      
-  #     steps:
-  #       - name: Checkout repository
-  #         uses: actions/checkout@v4
-
-  #       - name: Set up Python
-  #         uses: actions/setup-python@v5
-  #         with:
-  #           python-version: '3.10'
-
-  #       - name: Install dependencies
-  #         run: |
-  #           python -m pip install --upgrade pip
-  #           pip install -r requirements.txt
-
-  #       - name: Run ML Training and Evaluation
-  #         run: |
-  #           python main.py
-
-  #       - name: Upload Trained Model (Artifact)
-  #         uses: actions/upload-artifact@v4
-  #         with:
-  #           name: trained-model-${{ github.sha }}
-  #           path: models/iris_classifier.pkl
-  #           retention-days: 5
-        
-        
 name: Python ML CI/CD Pipeline
 
 on:
@@ -151,12 +78,14 @@ jobs:
           # You might parse metrics from main.py output or a saved file here
           # For simplicity, we assume main.py prints them
           echo "Model training and evaluation completed. Check logs above for metrics."
-# ... (all other jobs like build_and_test and train_and_evaluate remain the same) ...
 
   deploy:
     needs: train_and_evaluate # This job runs only after training and evaluation are successful
     runs-on: ubuntu-latest
-    
+    # Define an environment for deployment. This can be used for protection rules (e.g., manual approval).
+    # environment:
+    #   name: production
+    #   url: https://your-model-api.com # Replace with the actual URL of your deployed model/service
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -183,12 +112,12 @@ jobs:
         run: |
           # The `&` runs the process in the background
           # We specify the `src.api:app` to point uvicorn to our FastAPI application
-          # `models_dir` is set to ensure the API can find the model file
+          # `PYTHONPATH` is set to ensure the API can find modules in `src/`
           uvicorn src.api:app --host 0.0.0.0 --port 8000 &
           echo "API server started in the background on port 8000."
         env:
           PYTHONPATH: "${{ github.workspace }}" # Add project root to Python path
-          MODELS_DIR: "${{ github.workspace }}/models"
+          # MODELS_DIR: "${{ github.workspace }}/models" # This env var is not used by src/api.py directly
 
       - name: Wait for the server to start
         # Give the server a few seconds to boot up before we try to test it
@@ -198,74 +127,9 @@ jobs:
         run: |
           echo "Testing the deployed API..."
           # Use `curl` to make a POST request to the /predict endpoint
+          # The data should match the expected input format of your model
           curl --fail -X POST http://localhost:8000/predict \
           -H "Content-Type: application/json" \
           -d '{ "data": [[5.1, 3.5, 1.4, 0.2], [6.0, 2.7, 5.1, 1.6]] }'
           
           echo "API test successful!"
-  # deploy:
-  #   needs: train_and_evaluate # This job runs only after training and evaluation are successful
-  #   runs-on: ubuntu-latest
-  #   # Define an environment for deployment. This can be used for protection rules (e.g., manual approval).
-  #   # environment:
-  #   #   name: production
-  #   #   url: https://your-model-api.com # Replace with the actual URL of your deployed model/service
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v5
-  #       with:
-  #         python-version: '3.10' # Ensure consistent Python version for deployment
-
-  #     - name: Install deployment dependencies (if any)
-  #       run: |
-  #         python -m pip install --upgrade pip
-  #         # Add any specific deployment tool dependencies here, e.g.:
-  #         # pip install boto3 # For AWS deployments
-  #         # pip install azure-cli # For Azure deployments
-  #         # pip install google-cloud-aiplatform # For GCP deployments
-
-  #     - name: Download Trained Model Artifact
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: trained-model-${{ github.sha }} # Match the name from the upload step
-  #         path: models/ # Download to the models directory
-
-  #     - name: Simulate Model Deployment
-  #       run: |
-  #         echo "--- Starting Model Deployment ---"
-  #         echo "Model artifact 'iris_classifier.pkl' downloaded to 'models/' directory."
-          
-  #         # ----------------------------------------------------------------------
-  #         # IMPORTANT: Replace the following lines with your actual deployment commands.
-  #         # This is a placeholder for demonstration purposes.
-  #         #
-  #         # Examples of what you might do here:
-  #         # 1. Deploy to a cloud ML platform (e.g., AWS SageMaker, Azure ML, GCP AI Platform):
-  #         #    - Authenticate to your cloud provider (using GitHub Secrets for credentials).
-  #         #    - Use the cloud provider's CLI or SDK to deploy the model.
-  #         #    - Example for AWS Sagemaker (requires AWS CLI/SDK setup and credentials):
-  #         #      aws sagemaker create-model --model-name my-iris-model --primary-container ...
-  #         #      aws sagemaker create-endpoint-config ...
-  #         #      aws sagemaker create-endpoint ...
-  #         #
-  #         # 2. Build and push a Docker image for a model serving API:
-  #         #    - docker build -t your-docker-repo/iris-model-api:latest .
-  #         #    - docker push your-docker-repo/iris-model-api:latest
-  #         #    - Then, deploy this image to Kubernetes, ECS, Azure Container Instances, etc.
-  #         #
-  #         # 3. Copy the model to a model registry or storage bucket:
-  #         #    - cp models/iris_classifier.pkl s3://your-model-bucket/
-  #         #
-  #         # 4. Trigger an external deployment service via API call.
-  #         # ----------------------------------------------------------------------
-          
-  #         echo "Simulating deployment of 'models/iris_classifier.pkl' to a production endpoint."
-  #         echo "In a real scenario, this would involve cloud CLI commands, Docker builds, or API calls."
-  #         echo "Deployment successful! (Simulated)"
-          
-  #         # You might want to output the deployed model version or endpoint URL here
-  #         # echo "Deployed Model Version: ${{ github.sha }}"
-  #         # echo "Deployed Endpoint: https://your-model-api.com/predict"        
