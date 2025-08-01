@@ -1,0 +1,6 @@
+# filepath: e:\ml_project\requirements.txt
+numpy
+pandas
+scikit-learn
+pytest
+flake8
