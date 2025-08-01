@@ -72,11 +72,11 @@ jobs:
           path: models/iris_classifier.pkl # Path to your saved model
           retention-days: 5 # Keep artifact for 5 days
 
-      - name: Display Evaluation Metrics (Optional: for reporting)
-        run: |
-          # You might parse metrics from main.py output or a saved file here
-          # For simplicity, we assume main.py prints them
-          echo "Model training and evaluation completed. Check logs above for metrics."
+      # - name: Display Evaluation Metrics (Optional: for reporting)
+      #   run: |
+      #     # You might parse metrics from main.py output or a saved file here
+      #     # For simplicity, we assume main.py prints them
+      #     echo "Model training and evaluation completed. Check logs above for metrics."
 
   # Placeholder for Continuous Deployment (CD)
   # deploy:
