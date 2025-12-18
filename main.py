@@ -20,7 +20,7 @@ def main():
     for metric, value in metrics.items():
         print(f"{metric}: {value:.4f}")
     
-    print("--- Pipeline Finished ---")
+    print("--- Pipeline Finished ----")
 
 if __name__ == "__main__":
     main()
